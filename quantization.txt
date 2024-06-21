@@ -1,13 +1,5 @@
 ~ Quantization 코드기준 접근 방향 ~
 
-pytorch ==> pytorch 2.0 기준의 document 보고 해도 되겠지만 tutorial 제외 자료가 너무~~~ 적음
-
-pytorch_quantization ==> NVIDIA 어빠들이 만들어놨는디 tutorial 자료 따라서 하다보면 bias 부분 자료형 문제땜시 에러남( dynamic quantization이라서 그럼 시발)
-
-ONNX ==> int8 기준으로만 quantization만 해주지만 생각보다 자료도 많고 공부하기 좋음
-
-TESSORT ==> FP16도 된다함 자료도 꽤 있음
-
 <ONNX 기준 Post Training Quantization 진행>
 1. pretrained model을 onnx 형태로 변환
 
@@ -20,3 +12,10 @@ TESSORT ==> FP16도 된다함 자료도 꽤 있음
      quantize_dynamic('preprocess_test.onnx', 'test_quantized.onnx', weight_type=QuantType.QInt8,op_types_to_quantize=['MatMul', 'Attention', 'LSTM', 'Gather', 'Transpose', 'EmbedLayerNormalization'] )
    CNN이 포함되어야 하면 static 진행해야하며 이때는 CalibrationDataReader가 필요하게됨 ( static 이랑 dynamic 차이 보고 확인해야할듯? )
    static quantization ==> 주로 CNN에서 사용됨
+
+<TENSORRT 기준 Post Training Quantization 진행>
+1. ONNX로 저장한 파일 load 이후 tensorRT engine으로 빌드진행 (빌드진행시에 16bit quantization 하려면 config.set_flag(trt.BuilderFlag.FP16) 써줌)
+
+2. inferece 진행시에는 저장한 engine load 이후에 input, output에 대하여 host memory(cpu), device memory(gpu)로 처리하기 위한 binding 처리 진행
+
+3. 이후에 binding한 것을 호출하여 host to device (함수 cuda.memcpy_htod)로 input data gpu로 넘기고 inference 진행
